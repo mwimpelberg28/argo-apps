@@ -11,6 +11,31 @@ spec:
     targetRevision: 0.41.2
     helm:
       releaseName: otel-demo
+      valuesObject:
+        opentelemetry-collector:
+          config:
+            exporters:
+              otlp_grpc/grafana_cloud:
+                endpoint: grafana-cloud-otel-receiver.monitoring.svc.cluster.local:4317
+                tls:
+                  insecure: true
+            service:
+              pipelines:
+                traces:
+                  exporters: [otlp_grpc/jaeger, debug, span_metrics, otlp_grpc/grafana_cloud]
+                metrics:
+                  exporters: [otlp_http/prometheus, debug, otlp_grpc/grafana_cloud]
+                logs:
+                  exporters: [opensearch, debug, otlp_grpc/grafana_cloud]
+        components:
+          frontend-proxy:
+            service:
+              type: LoadBalancer
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-type: "external"
+                service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+                service.beta.kubernetes.io/aws-load-balancer-security-groups: "sg-0600dbcc3bcbb42a8"
   destination:
     server: https://kubernetes.default.svc
     namespace: otel-demo
